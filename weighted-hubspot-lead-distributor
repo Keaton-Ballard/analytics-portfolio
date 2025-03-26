@@ -1,0 +1,85 @@
+import os
+import random
+from typing import Any, Dict, Optional
+
+from hubspot import HubSpot
+from hubspot.crm.contacts import SimplePublicObjectInput
+
+def main(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Main entry point to process a HubSpot event and assign a contact owner based on weighted probability.
+    """
+    try:
+        result = assign_owner(event)
+        return result
+    except Exception as e:
+        print(f"[ERROR] Failed to process event: {e}")
+        return None
+
+def assign_owner(event: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Assigns a HubSpot contact to a randomly selected owner based on weighted probabilities.
+    Connects to HubSpot via API to update the contact's owner ID.
+    """
+
+    # Mapping of generic owner names to mock HubSpot owner IDs
+    owner_ids = {
+        'Rep1': '10000001',
+        'Rep2': '10000002',
+        'Rep3': '10000003',
+        'Rep4': '10000004',
+        'Rep5': '10000005',
+    }
+
+    # Weighted distribution for each rep
+    weights = {
+        'Rep1': 150,
+        'Rep2': 130,
+        'Rep3': 100,
+        'Rep4': 90,
+        'Rep5': 80,
+    }
+
+    total_weight = sum(weights.values())
+    random_pick = random.randint(0, total_weight - 1)
+
+    cumulative = 0
+    selected_rep = None
+    for rep, weight in weights.items():
+        cumulative += weight
+        if cumulative > random_pick:
+            selected_rep = rep
+            break
+
+    if selected_rep is None:
+        raise ValueError("Owner selection failed.")
+
+    selected_owner_id = owner_ids[selected_rep]
+    print(f"[INFO] Random value: {random_pick}. Assigned to: {selected_rep} (ID: {selected_owner_id})")
+
+    hubspot = HubSpot(access_token=os.getenv("HUBSPOT_PRIVATE_APP_TOKEN"))
+
+    contact_id = event.get("object", {}).get("objectId")
+    if not contact_id:
+        raise ValueError("Missing contact ID in event payload.")
+
+    properties = {"hubspot_owner_id": selected_owner_id}
+
+    try:
+        hubspot.crm.contacts.basic_api.update(
+            contact_id, SimplePublicObjectInput(properties=properties)
+        )
+        print("[SUCCESS] Contact owner updated.")
+        return {"contact_id": contact_id, "assigned_to": selected_rep}
+    except Exception as e:
+        print(f"[ERROR] Failed to update contact: {e}")
+        raise
+
+# Optional: local test
+if __name__ == "__main__":
+    test_event = {
+        "object": {
+            "objectId": "example_contact_id"
+        }
+    }
+    main(test_event)
