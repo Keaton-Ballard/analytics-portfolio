@@ -95,7 +95,8 @@ Standardizes U.S. phone numbers in the format (XXX) XXX-XXXX. Includes error han
 Automatically merges duplicate contact records using phone number or fallback logic based on first/last name match. Resolves inconsistencies caused by multi-source lead capture.
 
 ---
-## Interactive Tableau Dashboards
+
+## Data Visualizations: Interactive Tableau Dashboards
 
 ### [MBA Candidates: Key Demographics & Insights](https://public.tableau.com/views/WhoChoosesanMBAADemographicComparison/MBADecisionDashboard?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
 ### [Hospital Readmission Analysis](https://public.tableau.com/views/HospitalReadmissionAnalysis2/D211Dashboard?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
@@ -103,9 +104,14 @@ Automatically merges duplicate contact records using phone number or fallback lo
 ### [(First Dashboard) Riding Lawnmower Sales Jan 2019 - Oct 2022](https://public.tableau.com/views/DesktopViewLawnmowerSalesJan2019-Oct2022/DesktopDashboard?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
 
 ---
+
 Tools & Technologies
 
-Languages & Libraries: Python, Pandas, NumPy, scikit-learn, Seaborn, MatplotlibPlatforms & APIs: HubSpot CRM, HubSpot API, Jupyter NotebookTechniques: Regression, Classification, Clustering, PCA, Association Rules, API Integration, CRM Automation
+Languages & Libraries: Python, Pandas, NumPy, scikit-learn, Seaborn, Matplotlib
+Platforms & APIs: Tableau, HubSpot CRM, HubSpot API,  
+JupyterNotebookTechniques: Regression, Classification, Clustering, PCA, Association Rules, API Integration, CRM Automation
+
+---
 
 Thank you for visiting!
 
