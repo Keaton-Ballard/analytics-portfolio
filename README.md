@@ -94,6 +94,17 @@ Standardizes U.S. phone numbers in the format (XXX) XXX-XXXX. Includes error han
 
 Automatically merges duplicate contact records using phone number or fallback logic based on first/last name match. Resolves inconsistencies caused by multi-source lead capture.
 
+---
+
+Tools & Technologies
+
+Languages & Libraries: Python, Pandas, NumPy, scikit-learn, Seaborn, MatplotlibPlatforms & APIs: HubSpot CRM, HubSpot API, Jupyter NotebookTechniques: Regression, Classification, Clustering, PCA, Association Rules, API Integration, CRM Automation
+
+---
+
+Thank you for visiting!
+
+
 <!-- force update -->
 
 
