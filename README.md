@@ -1,5 +1,3 @@
-# Keaton Ballard's Portfolio
-
 ### HubSpot Custom Code Projects 
 (HubSpot scripts require a private app with the correct scopes and API key.) 
 
