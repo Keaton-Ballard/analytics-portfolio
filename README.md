@@ -1,4 +1,4 @@
-# Welcome to My Portfolio!
+# Welcome to My Data Analytics Portfolio!
 
 I'm Keaton Ballard, a data analyst passionate about using automation, analytics, and CRM strategy to drive smarter business decisions. This portfolio features data analysis projects from my master's program, custom Python scripts I developed to enhance HubSpot CRM workflows and Tableau dashboards I created that visualize and enhance data storytelling.
 
@@ -105,14 +105,14 @@ Automatically merges duplicate contact records using phone number or fallback lo
 
 ---
 
-## Skills
+## Tools & Technologies Used
 
 **Languages, Libraries & Frameworks:** 
 - Python (Pandas, NumPy,scikit-learn, Seaborn, Matplotlib)
 - R (dplyr, ggplot2, caret, tidyr, lubridate, stats)
 - SQL (PostgreSQL, pgAdmin; proficient in joins, aggregations, CTEs, and subqueries)
   
-**Tools & Platforms:**
+**Data Software & Platforms:**
   - Tableau
   - Power BI
   - HubSpot CRM
