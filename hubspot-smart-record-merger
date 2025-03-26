@@ -1,0 +1,127 @@
+import os
+import requests
+from typing import List, Dict, Optional
+
+# Load HubSpot API token from environment variable
+HUBSPOT_API_KEY = os.getenv("HUBSPOT_PRIVATE_APP_TOKEN")
+
+if not HUBSPOT_API_KEY:
+    raise ValueError("Missing API token. Please set 'HUBSPOT_PRIVATE_APP_TOKEN' as an environment variable.")
+
+# HubSpot API headers
+HEADERS = {
+    "Authorization": f"Bearer {HUBSPOT_API_KEY}",
+    "Content-Type": "application/json"
+}
+
+def search_by_phone(phone: str, original_id: str) -> List[Dict]:
+    """
+    Search for duplicate contacts by phone number, excluding the original contact.
+    """
+    url = "https://api.hubapi.com/crm/v3/objects/contacts/search"
+    payload = {
+        "filterGroups": [{
+            "filters": [{
+                "propertyName": "phone",
+                "operator": "EQ",
+                "value": phone
+            }]
+        }],
+        "properties": ["firstname", "lastname", "email"]
+    }
+
+    response = requests.post(url, headers=HEADERS, json=payload)
+    if response.status_code == 200:
+        results = response.json().get("results", [])
+        return [c for c in results if str(c["id"]) != str(original_id)]
+    else:
+        print(f"[ERROR] Phone search failed: {response.status_code} - {response.text}")
+        return []
+
+def search_by_name(first_name: str, last_name: str, original_id: str) -> List[Dict]:
+    """
+    Fallback search for duplicate contacts by exact first and last name.
+    """
+    url = "https://api.hubapi.com/crm/v3/objects/contacts/search"
+    payload = {
+        "filterGroups": [{
+            "filters": [
+                {"propertyName": "firstname", "operator": "EQ", "value": first_name},
+                {"propertyName": "lastname", "operator": "EQ", "value": last_name}
+            ]
+        }],
+        "properties": ["firstname", "lastname", "email"]
+    }
+
+    response = requests.post(url, headers=HEADERS, json=payload)
+    if response.status_code == 200:
+        results = response.json().get("results", [])
+        return [c for c in results if str(c["id"]) != str(original_id)]
+    else:
+        print(f"[ERROR] Name search failed: {response.status_code} - {response.text}")
+        return []
+
+def merge_contacts(primary_id: str, duplicate_id: str):
+    """
+    Merge a duplicate contact into the primary contact.
+    """
+    if primary_id == duplicate_id:
+        print(f"[SKIP] Cannot merge contact into itself: {duplicate_id}")
+        return
+
+    url = "https://api.hubapi.com/crm/v3/objects/contacts/merge"
+    payload = {
+        "primaryObjectId": primary_id,
+        "objectIdToMerge": duplicate_id
+    }
+
+    response = requests.post(url, headers=HEADERS, json=payload)
+    if response.status_code == 200:
+        print(f"[SUCCESS] Merged contact {duplicate_id} into {primary_id}")
+    else:
+        print(f"[ERROR] Merge failed: {response.status_code} - {response.text}")
+
+def main(event: Dict) -> Dict[str, str]:
+    """
+    Main function to process a HubSpot workflow event,
+    find potential duplicate contacts by phone or name,
+    and merge them into the original contact.
+    """
+    try:
+        contact_id = str(event["object"]["objectId"])
+        fields = event.get("fields", {}) or event.get("inputFields", {})
+
+        phone = fields.get("phone")
+        first_name = fields.get("firstname", "Unknown")
+        last_name = fields.get("lastname", "Unknown")
+
+        print(f"[INFO] Processing contact: {contact_id} | Name: {first_name} {last_name} | Phone: {phone}")
+
+        duplicates = []
+
+        # Step 1: Search by phone
+        if phone:
+            duplicates = search_by_phone(phone, contact_id)
+            print(f"[INFO] Found {len(duplicates)} duplicates by phone.")
+        else:
+            print("[INFO] No phone number provided.")
+
+        # Step 2: Fallback to name if no phone duplicates
+        if not duplicates:
+            print("[INFO] Fallback to name-based search.")
+            duplicates = search_by_name(first_name, last_name, contact_id)
+            print(f"[INFO] Found {len(duplicates)} duplicates by name.")
+
+        if not duplicates:
+            print("[INFO] No duplicates found. No action taken.")
+            return {"status": "No duplicates found"}
+
+        # Merge each duplicate
+        for dup in duplicates:
+            merge_contacts(contact_id, dup["id"])
+
+        return {"status": "Duplicates merged", "mergedInto": contact_id}
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return {"error": str(e), "status": "Failed"}
