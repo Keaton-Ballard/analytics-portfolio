@@ -1,0 +1,161 @@
+import os
+import json
+import requests
+from typing import Optional, Dict, Any
+
+# Get the HubSpot API token from environment variables
+HUBSPOT_API_KEY = os.getenv("HUBSPOT_PRIVATE_APP_TOKEN")
+BASE_URL = "https://api.hubapi.com"
+
+
+def get_latest_deal(contact_id: str) -> Optional[str]:
+    """
+    Retrieves the most recent deal associated with the given contact.
+    """
+    url = f"{BASE_URL}/crm/v3/objects/deals/search"
+    headers = {
+        "Authorization": f"Bearer {HUBSPOT_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "filterGroups": [{
+            "filters": [{
+                "propertyName": "associations.contact",
+                "operator": "EQ",
+                "value": contact_id
+            }]
+        }],
+        "sorts": ["-createdAt"],
+        "limit": 1
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    print("[DEBUG] Deal search response:", response.status_code, response.text)
+
+    if response.status_code == 200:
+        deals = response.json().get("results", [])
+        if deals:
+            return deals[0]["id"]
+    return None
+
+
+def get_last_meeting_booked(contact_id: str) -> Optional[str]:
+    """
+    Gets the timestamp of the last booked meeting for the contact, and
+    finds the engagement ID matching that timestamp.
+    """
+    url = f"{BASE_URL}/crm/v3/objects/contacts/{contact_id}?properties=engagements_last_meeting_booked"
+    headers = {
+        "Authorization": f"Bearer {HUBSPOT_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.get(url, headers=headers)
+    print("[DEBUG] Contact properties response:", response.status_code, response.text)
+
+    if response.status_code == 200:
+        contact_data = response.json()
+        last_meeting_time = contact_data.get("properties", {}).get("engagements_last_meeting_booked")
+        if last_meeting_time:
+            return find_meeting_by_timestamp(contact_id, last_meeting_time)
+    return None
+
+
+def find_meeting_by_timestamp(contact_id: str, meeting_time: str) -> Optional[str]:
+    """
+    Searches for the engagement that matches the contact and timestamp.
+    """
+    url = f"{BASE_URL}/crm/v3/objects/engagements/search"
+    headers = {
+        "Authorization": f"Bearer {HUBSPOT_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "filterGroups": [{
+            "filters": [
+                {
+                    "propertyName": "associations.contact",
+                    "operator": "EQ",
+                    "value": contact_id
+                },
+                {
+                    "propertyName": "hs_timestamp",
+                    "operator": "EQ",
+                    "value": meeting_time
+                }
+            ]
+        }],
+        "sorts": ["-createdAt"],
+        "limit": 1
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    print("[DEBUG] Meeting search response:", response.status_code, response.text)
+
+    if response.status_code == 200:
+        meetings = response.json().get("results", [])
+        if meetings:
+            return meetings[0]["id"]
+    return None
+
+
+def associate_meeting_with_deal(deal_id: str, meeting_id: str) -> bool:
+    """
+    Associates a meeting engagement with a deal in HubSpot.
+    """
+    url = f"{BASE_URL}/crm/v3/associations/deal/engagement/batch/create"
+    headers = {
+        "Authorization": f"Bearer {HUBSPOT_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "inputs": [{
+            "from": {"id": deal_id},
+            "to": {"id": meeting_id},
+            "type": "deal_to_engagement"
+        }]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    print("[DEBUG] Association response:", response.status_code, response.text)
+    return response.status_code == 200
+
+
+def main(event: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Main function to process a HubSpot event, find the latest deal and meeting,
+    and associate them.
+    """
+    try:
+        print("[INFO] Received event:", json.dumps(event, indent=2))
+        contact_id = event.get("object", {}).get("objectId")
+
+        if not contact_id:
+            raise ValueError("Missing contact ID in event payload.")
+
+        deal_id = get_latest_deal(contact_id)
+        if not deal_id:
+            raise ValueError("No deals found for this contact.")
+
+        meeting_id = get_last_meeting_booked(contact_id)
+        if not meeting_id:
+            raise ValueError("No meeting found for this contact.")
+
+        success = associate_meeting_with_deal(deal_id, meeting_id)
+        return {"success": success}
+
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return {"success": False, "error": str(e)}
+
+
+# Example usage for local testing
+if __name__ == "__main__":
+    sample_event = {
+        "object": {
+            "objectId": "example_contact_id"
+        }
+    }
+    result = main(sample_event)
+    print("[RESULT]", result)
