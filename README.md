@@ -29,3 +29,5 @@ This script automates the formatting of U.S. phone numbers for contacts in HubSp
 
 
 The purpose of this script is to automatically detect and merge a specialized group of duplicate HubSpot contacts. I created this automation due to a steady amount of contacts using one email on the ad form and a separate email on the meeting book form. HubSpot's merging system is currently manual. It first attempts to identify duplicates using the contact's phone number. It returns to searching by exact first and last name if no matches are found. The goal is to ensure that the correct records are being merged within the CRM.
+
+<!-- force update -->
