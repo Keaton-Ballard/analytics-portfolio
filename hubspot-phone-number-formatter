@@ -1,0 +1,111 @@
+import os
+import re
+import time
+import logging
+from hubspot import HubSpot
+from hubspot.crm.contacts import SimplePublicObjectInput
+from hubspot.crm.contacts.exceptions import ApiException
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+# Environment variable for HubSpot private app token
+API_TOKEN = os.getenv("HUBSPOT_PRIVATE_APP_TOKEN")
+
+if not API_TOKEN:
+    raise EnvironmentError("Missing API token. Please set 'HUBSPOT_PRIVATE_APP_TOKEN' in your environment.")
+
+# Initialize HubSpot client
+hubspot_client = HubSpot(access_token=API_TOKEN)
+
+PHONE_NUMBER_PROP = "phone"
+MAX_RETRIES = 5
+BASE_WAIT_TIME = 2
+
+def main(event: dict):
+    """
+    Main entry point for a HubSpot Workflow.
+    Formats a contact's phone number and updates it, with retry handling.
+    """
+    logging.info(f"Received event: {event}")
+
+    contact_id = event.get("object", {}).get("objectId")
+
+    if not contact_id or not str(contact_id).isdigit():
+        logging.error(f"Invalid contact ID: {contact_id}")
+        return
+
+    contact_id = int(contact_id)
+
+    try:
+        process_contact(contact_id)
+    except Exception as e:
+        logging.error(f"Failed to process contact {contact_id}: {e}")
+
+def process_contact(contact_id: int):
+    """
+    Fetch and update a contact's phone number in proper format if needed.
+    """
+    contact = execute_with_retries(lambda: hubspot_client.crm.contacts.basic_api.get_by_id(
+        contact_id, properties=[PHONE_NUMBER_PROP]
+    ))
+
+    if contact is None:
+        logging.warning(f"Skipping Contact ID {contact_id}: not found or deleted.")
+        return
+
+    original_phone = contact.properties.get(PHONE_NUMBER_PROP, "")
+    formatted_phone = format_phone_number(original_phone)
+
+    if formatted_phone and formatted_phone != original_phone:
+        execute_with_retries(lambda: hubspot_client.crm.contacts.basic_api.update(
+            contact_id,
+            SimplePublicObjectInput(properties={PHONE_NUMBER_PROP: formatted_phone})
+        ))
+        logging.info(f"Updated Contact ID {contact_id}: {formatted_phone}")
+    else:
+        logging.info(f"No update needed for Contact ID {contact_id}: {original_phone}")
+
+def execute_with_retries(api_call):
+    """
+    Executes a HubSpot API call with exponential backoff for rate limiting.
+    Handles 404 and 403 errors gracefully.
+    """
+    wait_time = BASE_WAIT_TIME
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            return api_call()
+        except ApiException as e:
+            if e.status == 429:
+                logging.warning(f"Rate limit hit. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+                wait_time *= 2
+            elif e.status == 404:
+                logging.warning("Contact not found. Possibly deleted. Skipping.")
+                return None
+            elif e.status == 403:
+                logging.error("Permission error. Check HubSpot app scopes.")
+                raise
+            else:
+                raise
+
+    logging.error("Max retries reached. Operation failed.")
+    raise Exception("Rate limit exceeded. Operation failed after retries.")
+
+def format_phone_number(phone_number: str) -> str:
+    """
+    Formats a US phone number into (XXX) XXX-XXXX format.
+    """
+    if not phone_number:
+        return phone_number
+
+    digits = re.sub(r"\D", "", phone_number).strip()
+
+    if digits.startswith("1") and len(digits) == 11:
+        digits = digits[1:]
+
+    if len(digits) == 10:
+        return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+
+    return phone_number  # Return original if not format-able
