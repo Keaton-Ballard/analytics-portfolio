@@ -107,28 +107,28 @@ Automatically merges duplicate contact records using phone number or fallback lo
 
 ## Skills
 
-**Languages, Libraries & Features:** 
+**Languages, Libraries & Frameworks:** 
 - Python (Pandas, NumPy,scikit-learn, Seaborn, Matplotlib)
 - R (dplyr, ggplot2, caret, tidyr, lubridate, stats)
-- SQL (PostgreSQL, pgAdmin, Tableau, Joins, Aggregations)
+- SQL (PostgreSQL, pgAdmin; proficient in joins, aggregations, CTEs, and subqueries)
   
-**Platforms & APIs:**
+**Tools & Platforms:**
   - Tableau
+  - Power BI
   - HubSpot CRM
   - Jupyter Lab (Anaconda)
-  - Rstudio
+  - RStudio
   - PostgreSQL
-  - Power BI
     
-Data Analysis Methods: 
-- Regression
+**Analytical Methods:** 
+- Regression Analysis
 - Classification
 - Clustering
--  PCA
-- Association Rules
+- Principal Component Analysis (PCA)
+- Association Rule Mining
 - API Integration
 - CRM Automation
-
+  
 ---
 
 Thank you for visiting!
