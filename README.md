@@ -1,4 +1,9 @@
+# Welcome to My Portfolio!
+
+I'm Keaton Ballard, a data analyst interested in automation, business operations, and data-driven decision-making. This portfolio highlights my experience working with real-world CRM workflows. The first section showcases Python scripts I built to optimize processes within HubSpot. The second section features scripts I used during my Data Analytics Master's program. 
+
 ### HubSpot Custom Code Projects 
+
 (HubSpot scripts require a private app with the correct scopes and API key.) 
 
 ## [Project 1: Weighted HubSpot Lead Distributor](https://github.com/Keaton-Ballard/keaton__ballard_portfolio/blob/main/weighted-hubspot-lead-distributor)
