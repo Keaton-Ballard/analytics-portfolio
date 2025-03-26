@@ -1,6 +1,6 @@
 # Welcome to My Portfolio!
 
-I'm Keaton Ballard, a data analyst passionate about using automation, analytics, and CRM strategy to drive smarter business decisions. This portfolio features data analysis projects from my master's program, alongside custom Python automations I developed to enhance HubSpot CRM workflows.
+I'm Keaton Ballard, a data analyst passionate about using automation, analytics, and CRM strategy to drive smarter business decisions. This portfolio features data analysis projects from my master's program, custom Python scripts I developed to enhance HubSpot CRM workflows and Tableau dashboards I created that visualize and enhance data storytelling.
 
 ---
 
